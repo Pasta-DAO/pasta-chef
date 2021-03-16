@@ -95,6 +95,7 @@ contract PastaChef {
 
     function updateEndBlock(uint256 _endBlock) external onlyOwner {
         require(_endBlock >= block.number && _endBlock > startBlock, "PastaChef::invalid-end-block");
+        require(endBlock > block.number, "PastaChef::reward-period-over");
 
         emit UpdateEndBlock(endBlock, _endBlock);
 
