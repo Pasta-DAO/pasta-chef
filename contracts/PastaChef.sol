@@ -70,14 +70,14 @@ contract PastaChef {
         return blockNumber.sub(lastUpdatedBlock).mul(pastaPerBlock);
     }
 
-    function claimForAll() external {
+    function claimForAll() public {
         uint256 rewards = pendingRewards();
         require(rewards > 0, "PastaChef::already-claimed");
 
         uint256 balance = pasta.balanceOf(address(this));
-        require(balance > rewards, "PastaChef::insufficient-pasta");
+        require(balance >= rewards, "PastaChef::insufficient-pasta");
 
-        require(pasta.transfer(address(pool), balance), "PastaChef::failed-to-distribute");
+        require(pasta.transfer(address(pool), rewards), "PastaChef::failed-to-distribute");
         pool.sync();
 
         lastUpdatedBlock = block.number;
@@ -87,6 +87,8 @@ contract PastaChef {
 
     function updateRewardRate(uint256 _pastaPerBlock) external onlyOwner {
         require(_pastaPerBlock > 0, "PastaChef::invalid-rewards");
+
+        claimForAll();
 
         emit UpdateRewardRate(pastaPerBlock, _pastaPerBlock);
 
@@ -103,6 +105,7 @@ contract PastaChef {
     }
 
     function sweep(address to) external onlyOwner {
+        require(block.number > endBlock, "PastaChef::reward-period-not-over");
         uint256 balance = pasta.balanceOf(address(this));
 
         require(pasta.transfer(to, balance));
